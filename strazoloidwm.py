@@ -141,7 +141,7 @@ class framex:
 		self.runflg=1
 
 class desktop:
-	def __init__(self, sizex, sizey, name="desktop", bgcolor=(200, 200, 255), pumpcall=None):
+	def __init__(self, sizex, sizey, name="desktop", bgcolor=(200, 200, 255), pumpcall=None, resizable=0):
 		#dummy values
 		self.pid=-1
 		self.wo=-1
@@ -153,7 +153,7 @@ class desktop:
 		self.bgcolor=bgcolor
 		self.SurfRect=pygame.Rect(0, 0, sizex, sizey)
 		self.runflg=1
-		
+		self.resizable=resizable
 		self.surface=pygame.Surface((sizex, sizey))
 		self.surface.fill(bgcolor)
 		self.statflg=1
@@ -161,7 +161,7 @@ class desktop:
 			self.pumpcall(self)
 		self.statflg=0
 		
-		
+		self.resizable
 	def pump(self):
 		if self.pumpcall!=None:
 			self.pumpcall(self)
@@ -193,6 +193,16 @@ class desktop:
 	def quitcall(self):
 		self.statflg=3
 		self.runflg=0
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		self.statflg=0
+	def resize(self, xsize, ysize):
+		self.sizex=xsize
+		self.sizey=ysize
+		self.surface=pygame.Surface((xsize, ysize))
+		self.surface.fill(self.bgcolor)
+	def post_resize(self):
+		self.statflg=8
 		if self.pumpcall!=None:
 			self.pumpcall(self)
 		self.statflg=0
@@ -236,7 +246,10 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg):
 
 class framescape:
 	def __init__(self, desktop, framebg=(110, 110, 130), framefg=(255, 255, 255), frametext=(255, 255, 255), actframebg=(0, 100, 130), actframefg=(255, 255, 255), actframetext=(255, 255, 255)):
-		self.surface=pygame.display.set_mode((desktop.sizex, desktop.sizey))
+		if desktop.resizable:
+			self.surface=pygame.display.set_mode((desktop.sizex, desktop.sizey), pygame.RESIZABLE)
+		else:
+			self.surface=pygame.display.set_mode((desktop.sizex, desktop.sizey))
 		self.proclist=[]
 		self.idlook={}
 		self.idcnt=0
@@ -252,8 +265,9 @@ class framescape:
 		self.affg=actframefg
 		self.ftxt=frametext
 		self.aftxt=actframetext
+		self.resizedesk=0
 		self.simplefont = pygame.font.SysFont(None, fontsize)
-		print("Strazoloid Window Manager v1.0.1")
+		print("Strazoloid Window Manager v1.0.2")
 	def close_pid(self, pid):
 		try:
 			frame=self.idlook[pid]
@@ -279,6 +293,17 @@ class framescape:
 		self.idlook[frame.pid]=frame
 	def process(self):
 		while self.runflg:
+			if self.resizedesk==1:
+				self.resizedesk=2
+			elif self.resizedesk==2:
+				self.resizedesk=0
+				if resw<300:
+					resw=300
+				if resh<300:
+					resh=300
+				self.desktop.resize(resw, resh)
+				self.surface=pygame.display.set_mode((self.desktop.sizex, self.desktop.sizey), pygame.RESIZABLE)
+				self.desktop.post_resize()
 			self.clock.tick(30)
 			#pump calls
 			self.desktop.pump()
@@ -309,6 +334,12 @@ class framescape:
 			pygame.display.flip()
 			#event parser
 			for event in pygame.event.get():
+				if event.type==pygame.VIDEORESIZE:
+					self.resizedesk=1
+					resw=event.w
+					resh=event.h
+					time.sleep(0.1)
+					break
 				if event.type==pygame.QUIT:
 					self.runflg=0
 					for frame in self.proclist:

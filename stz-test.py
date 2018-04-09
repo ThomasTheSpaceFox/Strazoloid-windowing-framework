@@ -30,10 +30,12 @@ def event_test(frameobj, data=None):
 		print(frameobj.name + " stat 6: keydown")
 	elif frameobj.statflg==7:
 		print(frameobj.name + " stat 7: keyup")
+	elif frameobj.statflg==8:
+		print(frameobj.name + " stat 8: desktop window resize")
 
 
-
-desk=stz.desktop(800, 600, "Test desktop 1", pumpcall=event_test)
+#if you want the multi-window enviornment to be resizable, set the resizable flag to 1 in the desktop instance.
+desk=stz.desktop(800, 600, "Test desktop 1", pumpcall=event_test, resizable=1)
 framesc=stz.framescape(desk)
 
 def proccount(frameobj, data=None):
@@ -56,6 +58,7 @@ def proccount(frameobj, data=None):
 #5=clickup
 #6=keydown
 #7=keyup
+#8=desktop window resize (desktop only) (desktop must have resizability enabled)
 
 
 #runflg values:
@@ -98,4 +101,5 @@ framesc.add_frame(testframe)
 framesc.add_frame(testframe2)
 framesc.add_frame(testframe3)
 framesc.add_frame(doodleframe)
+#begin wm mainloop.
 framesc.process()
