@@ -1,9 +1,9 @@
 # Strazoloid windowing framework
-v1.0.0
-a Python/pygame virtual window manager framework.
-Copyright (c) 2018 Thomas Leathers and Contributors       
-    
-
+v1.0.0        
+a Python/pygame virtual window manager framework.         
+Copyright (c) 2018 Thomas Leathers and Contributors            
+        
+        
 Strazoloid windowing framework is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
