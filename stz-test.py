@@ -70,8 +70,32 @@ def proccount(frameobj, data=None):
 testframe=stz.framex(200, 200, "test", resizable=1, pumpcall=event_test)
 testframe2=stz.framex(200, 100, "test2", pumpcall=event_test)
 testframe3=stz.framex(200, 60, "test3", pumpcall=proccount)
+class doodlexq:
+	def __init__(self):
+		self.lineflg=0
+		return
+	def framecall(self, frameobj, data=None):
+		if frameobj.statflg==0:
+			if self.lineflg:
+				#remove xy postition bias using mousehelper.
+				self.curpos=stz.mousehelper(pygame.mouse.get_pos(), frameobj)
+				pygame.draw.line(frameobj.surface, (255, 255, 255), self.prevpos, self.curpos, 1)
+				self.prevpos=self.curpos
+		elif frameobj.statflg==4:
+			if data.button==1:
+				self.prevpos=stz.mousehelper(data.pos, frameobj)
+				self.lineflg=1
+			elif data.button==3:
+				frameobj.surface.fill((0, 0, 0))
+		elif frameobj.statflg==5:
+			self.lineflg=0
+	
+doodleinst=doodlexq()
+doodleframe=stz.framex(300, 300, "doodle (left=draw, right=reset)", pumpcall=doodleinst.framecall)
+
 
 framesc.add_frame(testframe)
 framesc.add_frame(testframe2)
 framesc.add_frame(testframe3)
+framesc.add_frame(doodleframe)
 framesc.process()

@@ -1,5 +1,5 @@
 # Strazoloid windowing framework
-v1.0.0        
+v1.0.1        
 a Python/pygame virtual window manager framework.         
 Copyright (c) 2018 Thomas Leathers and Contributors            
         

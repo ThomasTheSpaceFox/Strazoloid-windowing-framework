@@ -16,6 +16,9 @@ titlecache={}
 titlecacheact={}
 
 
+def mousehelper(mpos, frameobj):
+	return (mpos[0]-frameobj.xpos, mpos[1]-frameobj.ypos)
+
 def getframe(surfrect, resize=0):
 	framerect=surfrect.inflate(framepad, framepad)
 	framerect.y-=hudsize
@@ -250,6 +253,7 @@ class framescape:
 		self.ftxt=frametext
 		self.aftxt=actframetext
 		self.simplefont = pygame.font.SysFont(None, fontsize)
+		print("Strazoloid Window Manager v1.0.1")
 	def close_pid(self, pid):
 		try:
 			frame=self.idlook[pid]
