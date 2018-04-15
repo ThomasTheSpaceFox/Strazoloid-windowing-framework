@@ -266,6 +266,7 @@ class framescape:
 		self.ftxt=frametext
 		self.aftxt=actframetext
 		self.resizedesk=0
+		self.activeframe=None
 		self.simplefont = pygame.font.SysFont(None, fontsize)
 		print("Strazoloid Window Manager v1.0.2")
 	def close_pid(self, pid):
@@ -347,17 +348,20 @@ class framescape:
 					self.desktop.quitcall()
 					break
 				if event.type==pygame.KEYDOWN:
-					self.activeframe.keydown(event)
+					if self.activeframe!=None:
+						self.activeframe.keydown(event)
 					self.desktop.keydown(event)
 				if event.type==pygame.KEYUP:
-					self.activeframe.keyup(event)
+					if self.activeframe!=None:
+						self.activeframe.keyup(event)
 					self.desktop.keyup(event)
 				if event.type==pygame.MOUSEBUTTONUP:
 					if event.button==1:
 						if self.moveframe!=None and resizeframe!=0:
 							self.moveframe.post_resize()
 						self.moveframe=None
-					self.activeframe.clickup(event)
+					if self.activeframe!=None:
+						self.activeframe.clickup(event)
 					self.desktop.clickup(event)
 				if event.type==pygame.MOUSEBUTTONDOWN:
 					self.proclist.sort(key=lambda x: x.wo, reverse=False)
