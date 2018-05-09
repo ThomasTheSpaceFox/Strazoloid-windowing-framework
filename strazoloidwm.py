@@ -86,7 +86,7 @@ class framex:
 			self.sizey=self.sizeminy
 		self.SurfRect.w=self.sizex
 		self.SurfRect.h=self.sizey
-		self.surface=pygame.Surface((self.sizex, self.sizey))
+		self.surface=pygame.Surface((self.sizex, self.sizey)).convert()
 		return
 	def click(self, event):
 		self.statflg=4
@@ -199,7 +199,7 @@ class desktop:
 	def resize(self, xsize, ysize):
 		self.sizex=xsize
 		self.sizey=ysize
-		self.surface=pygame.Surface((xsize, ysize))
+		self.surface=pygame.Surface((xsize, ysize)).convert()
 		self.surface.fill(self.bgcolor)
 	def post_resize(self):
 		self.statflg=8
@@ -245,7 +245,9 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg):
 	dispsurf.blit(frame.surface, frame.SurfRect)
 
 class framescape:
-	def __init__(self, desktop, framebg=(110, 110, 130), framefg=(255, 255, 255), frametext=(255, 255, 255), actframebg=(0, 100, 130), actframefg=(255, 255, 255), actframetext=(255, 255, 255)):
+	def __init__(self, desktop, framebg=(110, 110, 130), framefg=(255, 255, 255), frametext=(255, 255, 255), actframebg=(0, 100, 130), actframefg=(255, 255, 255), actframetext=(255, 255, 255), deskicon=None):
+		if deskicon!=None:
+			pygame.display.set_icon(deskicon)
 		if desktop.resizable:
 			self.surface=pygame.display.set_mode((desktop.sizex, desktop.sizey), pygame.RESIZABLE)
 		else:
@@ -254,6 +256,7 @@ class framescape:
 		self.idlook={}
 		self.idcnt=0
 		self.desktop=desktop
+		
 		pygame.display.set_caption(desktop.name, desktop.name)
 		self.desktop.surface.convert(self.surface)
 		self.moveframe=None
@@ -371,7 +374,10 @@ class framescape:
 						framerectx=getframe(frame.SurfRect, frame.resizable)
 						if framerectx.collidepoint(event.pos):
 							if frame.SurfRect.collidepoint(event.pos):
-								frame.click(event)
+								if frame.wo==0:
+									frame.click(event)
+									click=1
+									break
 								click=1
 								if frame.wo!=None:
 									for framew in self.proclist:
