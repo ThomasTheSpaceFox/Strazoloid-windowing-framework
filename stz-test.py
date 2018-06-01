@@ -70,7 +70,7 @@ def proccount(frameobj, data=None):
 
 	
 
-testframe=stz.framex(200, 200, "test", resizable=1, pumpcall=event_test)
+testframe=stz.framex(200, 200, "test --REALLYLONGNAME--  -- -----------", resizable=1, pumpcall=event_test)
 testframe2=stz.framex(200, 100, "test2", pumpcall=event_test)
 testframe3=stz.framex(200, 60, "test3", pumpcall=proccount)
 class doodlexq:
