@@ -32,6 +32,12 @@ def event_test(frameobj, data=None):
 		print(frameobj.name + " stat 7: keyup")
 	elif frameobj.statflg==8:
 		print(frameobj.name + " stat 8: desktop window resize")
+	elif frameobj.statflg==9:
+		print(frameobj.name + " stat 9: frame shade")
+	elif frameobj.statflg==10:
+		print(frameobj.name + " stat 10: frame unshade")
+
+
 
 
 #if you want the multi-window enviornment to be resizable, set the resizable flag to 1 in the desktop instance.
@@ -59,7 +65,8 @@ def proccount(frameobj, data=None):
 #6=keydown
 #7=keyup
 #8=desktop window resize (desktop only) (desktop must have resizability enabled)
-
+#9=window has been shaded. (aka, shrunk to just a title bar. surface is HIDDEN.) (frames only)
+#10=window has been unshaded. (aka returned to normal) (frames only)
 
 #runflg values:
 #1=frame is running.

@@ -11,8 +11,8 @@ hudsize=20
 fontsize=25
 
 resizebar=10
-#0=plain, 1=3D
-framestyle=1
+#0=plain, 1=3D, 2=3D2
+framestyle=2
 
 titlecache={}
 titlecacheact={}
@@ -35,8 +35,42 @@ def cachesizecheck():
 def mousehelper(mpos, frameobj):
 	return (mpos[0]-frameobj.xpos, mpos[1]-frameobj.ypos)
 
+def getframe_shadeaware(frame, surfrect, resize=0):
+	if framestyle!=2:
+		framerect=surfrect.inflate(framepad, framepad)
+		
+	else:
+		framerect=surfrect.inflate(1, 1)
+		framerect.y-=framepad//2+4
+		framerect.h+=framepad//2+4
+		framerect.x-=2
+		framerect.w+=1
+	framerect.y-=hudsize
+	framerect.h+=hudsize
+	if frame.shade:
+		framerect.h-=surfrect.h
+		if framestyle==2:
+			framerect.h-=5
+	elif resize:
+		framerect.h+=resizebar
+	if framestyle==1:
+		framerect.h+=2
+		framerect.w+=2
+		framerect.x-=1
+		framerect.y-=1
+	
+	return framerect
+
 def getframe(surfrect, resize=0):
-	framerect=surfrect.inflate(framepad, framepad)
+	if framestyle!=2:
+		framerect=surfrect.inflate(framepad, framepad)
+		
+	else:
+		framerect=surfrect.inflate(1, 1)
+		framerect.y-=framepad//2+4
+		framerect.h+=framepad//2+4
+		framerect.x-=2
+		framerect.w+=1
 	framerect.y-=hudsize
 	framerect.h+=hudsize
 	if resize:
@@ -49,16 +83,23 @@ def getframe(surfrect, resize=0):
 	return framerect
 
 def getclose(framerect):
-	if framestyle:
-		closebtn=pygame.Rect(framerect.x+framerect.w-1-hudsize, framerect.y, hudsize, hudsize)
+	if framestyle==1 or framestyle==2:
+		closebtn=pygame.Rect(framerect.x+framerect.w-2-hudsize, framerect.y+2, hudsize, hudsize)
 	else:
 		closebtn=pygame.Rect(framerect.x, framerect.y, hudsize, hudsize)
+	return closebtn
+
+def getshade(framerect):
+	if framestyle==1 or framestyle==2:
+		closebtn=pygame.Rect(framerect.x+framerect.w-2-hudsize-hudsize-2, framerect.y+2, hudsize, hudsize)
+	else:
+		closebtn=pygame.Rect(framerect.x+hudsize+1, framerect.y, hudsize, hudsize)
 	return closebtn
 
 class framex:
 	def __init__(self, sizex, sizey, name, xpos=10, ypos=30, resizable=0, sizeminx=140, sizeminy=140, pumpcall=None):
 		
-		
+		self.shade=0
 		#---Required---
 		self.resizable=resizable
 		self.sizex=sizex
@@ -163,7 +204,16 @@ class framex:
 	def start_prep(self):
 		self.statflg=0
 		self.runflg=1
-
+	def reshade(self):
+		self.statflg=9
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		self.statflg=0
+	def unshade(self):
+		self.statflg=10
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		self.statflg=0
 class desktop:
 	def __init__(self, sizex, sizey, name="desktop", bgcolor=(200, 200, 255), pumpcall=None, resizable=0):
 		#dummy values
@@ -234,41 +284,96 @@ class desktop:
 
 color3d=pygame.Color(70, 70, 70)
 
-def draw3Dbox(surface, rect, color, size=3):
+def draw3Dbox(surface, rect, color, size=3, invert=0):
 	try:
 		color.r
 	except AttributeError:
 		color=pygame.Color(color[0], color[1], color[2])
-	subcolor=(color-color3d)
-	supercolor=(color+color3d)
+	if invert:
+		
+		subcolor=(color+color3d)
+		supercolor=(color-color3d)
+	else:
+		subcolor=(color-color3d)
+		supercolor=(color+color3d)
 	
 	pygame.draw.line(surface, supercolor, (rect.left, rect.top), (rect.right, rect.top), size)
 	pygame.draw.line(surface, supercolor, (rect.left, rect.top), (rect.left, rect.bottom), size)
 	pygame.draw.line(surface, subcolor, (rect.right, rect.top), (rect.right, rect.bottom), size)
 	pygame.draw.line(surface, subcolor, (rect.left, rect.bottom), (rect.right, rect.bottom), size)
-	
 
-def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg):
+def drawbevelline(surface, color, point0, point1, size, invert=0):
+	try:
+		color.r
+	except AttributeError:
+		color=pygame.Color(color[0], color[1], color[2])
+	if invert:
+		
+		subcolor=(color+color3d)
+		supercolor=(color-color3d)
+	else:
+		subcolor=(color-color3d)
+		supercolor=(color+color3d)
+	point0b=(point0[0], point0[1]-size)
+	point1b=(point1[0], point1[1]-size)
+	pygame.draw.line(surface, supercolor, point0, point1, size)
+	pygame.draw.line(surface, subcolor, point0b, point1b, size)
+
+
+
+def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ibev):
 	framerect=getframe(frame.SurfRect, frame.resizable)
+	if framestyle==2:
+		poprect=framerect.copy()
+		poprect.x-=2
+		poprect.y-=2
+		poprect.w+=4
+		poprect.h+=4
+		
 	closerect=getclose(framerect)
+	shaderect=getshade(framerect)
 	if frame.wo==0:
 		qfg=afg
 		qbg=abg
 		qtxt=atxt
+		bev=abev
 	else:
 		qfg=fg
 		qbg=bg
 		qtxt=textcolor
+		bev=ibev
 	if not framestyle:
 		pygame.draw.rect(dispsurf, qbg, framerect, 0)
 		pygame.draw.rect(dispsurf, qfg, framerect, 1)
 		pygame.draw.rect(dispsurf, qbg, closerect, 0)
+		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 1)
+		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 1)
 		pygame.draw.rect(dispsurf, qfg, closerect, 1)
+		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
+		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 1)
+		pygame.draw.rect(dispsurf, qfg, shaderect, 1)
 		if frame.resizable:
 			pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
 			pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
 			pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
-
+	elif framestyle==2:
+		#3D frame style 2
+		pygame.draw.rect(dispsurf, qbg, framerect, 0)
+		if frame.resizable:
+			#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
+			pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
+			#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
+		draw3Dbox(dispsurf, poprect, bev, 2, 0)
+		draw3Dbox(dispsurf, framerect, bev, 2, 1)
+		pygame.draw.rect(dispsurf, qbg, closerect, 0)
+		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
+		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
+		draw3Dbox(dispsurf, closerect, qbg, 2)
+		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
+		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
+		draw3Dbox(dispsurf, shaderect, qbg, 2)
+		drawbevelline(dispsurf, bev, (framerect.x+2, frame.ypos-2), (framerect.x+framerect.w-1, frame.ypos-2), 2, 1)
+		
 	else:
 		#3D frame style
 		pygame.draw.rect(dispsurf, qbg, framerect, 0)
@@ -281,6 +386,9 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg):
 		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
 		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
 		draw3Dbox(dispsurf, closerect, qbg, 2)
+		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
+		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
+		draw3Dbox(dispsurf, shaderect, qbg, 2)
 	if frame.wo==0:
 		if frame.name not in titlecacheact:
 			namex=font.render(frame.name, True, atxt, abg).convert()
@@ -294,18 +402,110 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg):
 		else:
 			namex=titlecache[frame.name]
 	namexrect=namex.get_rect()
-	if namexrect.w>framerect.w-8-hudsize:
-		namexrect.w=framerect.w-8-hudsize
+	if namexrect.w>framerect.w-8-hudsize-hudsize:
+		namexrect.w=framerect.w-8-hudsize-hudsize
 	else:
 		namexrect=None
-	if framestyle:
+	if framestyle==1 or framestyle==2:
 		dispsurf.blit(namex, (framerect.x+2, framerect.y+2), area=namexrect)
 	else:
-		dispsurf.blit(namex, (framerect.x+hudsize+2, framerect.y+2), area=namexrect)
+		dispsurf.blit(namex, (framerect.x+hudsize+hudsize+2, framerect.y+2), area=namexrect)
 	dispsurf.blit(frame.surface, frame.SurfRect)
 
+
+def shadedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ibev):
+	framerect=getframe_shadeaware(frame, frame.SurfRect, frame.resizable)
+	if framestyle==2:
+		poprect=framerect.copy()
+		poprect.x-=2
+		poprect.y-=2
+		poprect.w+=4
+		poprect.h+=4
+		
+	closerect=getclose(framerect)
+	shaderect=getshade(framerect)
+	if frame.wo==0:
+		qfg=afg
+		qbg=abg
+		qtxt=atxt
+		bev=abev
+	else:
+		qfg=fg
+		qbg=bg
+		qtxt=textcolor
+		bev=ibev
+	if not framestyle:
+		pygame.draw.rect(dispsurf, qbg, framerect, 0)
+		pygame.draw.rect(dispsurf, qfg, framerect, 1)
+		pygame.draw.rect(dispsurf, qbg, closerect, 0)
+		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 1)
+		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 1)
+		pygame.draw.rect(dispsurf, qfg, closerect, 1)
+		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
+		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 1)
+		pygame.draw.rect(dispsurf, qfg, shaderect, 1)
+		#if frame.resizable:
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
+	elif framestyle==2:
+		#3D frame style 2
+		pygame.draw.rect(dispsurf, qbg, framerect, 0)
+		#if frame.resizable:
+		#	#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
+		#	#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
+		draw3Dbox(dispsurf, poprect, bev, 2, 0)
+		draw3Dbox(dispsurf, framerect, bev, 2, 1)
+		pygame.draw.rect(dispsurf, qbg, closerect, 0)
+		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
+		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
+		draw3Dbox(dispsurf, closerect, qbg, 2)
+		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
+		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
+		draw3Dbox(dispsurf, shaderect, qbg, 2)
+		#drawbevelline(dispsurf, qfg, (framerect.x+2, frame.ypos-2), (framerect.x+framerect.w-1, frame.ypos-2), 2, 1)
+		
+	else:
+		#3D frame style
+		pygame.draw.rect(dispsurf, qbg, framerect, 0)
+		#if frame.resizable:
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
+		#	pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
+		draw3Dbox(dispsurf, framerect, qbg)
+		pygame.draw.rect(dispsurf, qbg, closerect, 0)
+		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
+		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
+		draw3Dbox(dispsurf, closerect, qbg, 2)
+		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
+		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
+		draw3Dbox(dispsurf, shaderect, qbg, 2)
+	if frame.wo==0:
+		if frame.name not in titlecacheact:
+			namex=font.render(frame.name, True, atxt, abg).convert()
+			titlecacheact[frame.name]=namex
+		else:
+			namex=titlecacheact[frame.name]
+	else:
+		if frame.name not in titlecache:
+			namex=font.render(frame.name, True, textcolor, bg).convert()
+			titlecache[frame.name]=namex
+		else:
+			namex=titlecache[frame.name]
+	namexrect=namex.get_rect()
+	if namexrect.w>framerect.w-8-hudsize-hudsize:
+		namexrect.w=framerect.w-8-hudsize-hudsize
+	else:
+		namexrect=None
+	if framestyle==1 or framestyle==2:
+		dispsurf.blit(namex, (framerect.x+2, framerect.y+2), area=namexrect)
+	else:
+		dispsurf.blit(namex, (framerect.x+hudsize+hudsize+2, framerect.y+2), area=namexrect)
+	#dispsurf.blit(frame.surface, frame.SurfRect)
+
 class framescape:
-	def __init__(self, desktop, framebg=(110, 110, 130), framefg=(255, 255, 255), frametext=(255, 255, 255), actframebg=(0, 100, 130), actframefg=(255, 255, 255), actframetext=(255, 255, 255), deskicon=None):
+	def __init__(self, desktop, framebg=(110, 110, 130), framefg=(255, 255, 255), frametext=(255, 255, 255), actframebg=(0, 100, 130), actframefg=(255, 255, 255), actframetext=(255, 255, 255), actbevel=(255, 255, 255), inactbevel=(255, 255, 255), deskicon=None):
 		if deskicon!=None:
 			pygame.display.set_icon(deskicon)
 		if desktop.resizable:
@@ -326,18 +526,22 @@ class framescape:
 		self.ffg=framefg
 		self.afbg=actframebg
 		self.affg=actframefg
+		self.abev=actbevel
+		self.iabev=inactbevel
 		self.ftxt=frametext
 		self.aftxt=actframetext
 		self.resizedesk=0
 		self.activeframe=None
 		self.simplefont = pygame.font.SysFont(None, fontsize)
-		print("Strazoloid Window Manager v1.0.3")
+		print("Strazoloid Window Manager v1.1.0")
 	def close_pid(self, pid):
 		try:
 			frame=self.idlook[pid]
 			if frame in self.proclist:
 				self.proclist.remove(frame)
 				frame.closecall()
+			if frame==self.activeframe:
+				self.activeframe=None
 		except KeyError:
 			return
 	def close_frame(self, frame):
@@ -395,7 +599,10 @@ class framescape:
 			self.proclist.sort(key=lambda x: x.wo, reverse=True)
 			self.surface.blit(self.desktop.surface, (0, 0))
 			for frame in self.proclist:
-				framedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg)
+				if frame.shade:
+					shadedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg, self.abev, self.iabev)
+				else:
+					framedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg, self.abev, self.iabev)
 				
 			pygame.display.flip()
 			#event parser
@@ -433,9 +640,9 @@ class framescape:
 					
 					click=0
 					for frame in self.proclist:
-						framerectx=getframe(frame.SurfRect, frame.resizable)
+						framerectx=getframe_shadeaware(frame, frame.SurfRect, frame.resizable)
 						if framerectx.collidepoint(event.pos):
-							if frame.SurfRect.collidepoint(event.pos):
+							if frame.SurfRect.collidepoint(event.pos) and frame.shade==0:
 								if frame.wo==0:
 									frame.click(event)
 									click=1
@@ -450,6 +657,26 @@ class framescape:
 							elif getclose(framerectx).collidepoint(event.pos) and event.button==1:
 								self.proclist.remove(frame)
 								frame.closecall()
+								if frame==self.activeframe:
+									self.activeframe=None
+								break
+							elif getshade(framerectx).collidepoint(event.pos) and event.button==1:
+								if frame.shade:
+									frame.shade=0
+									frame.unshade()
+								else:
+									frame.shade=1
+									frame.reshade()
+								break
+							elif event.button==5:
+								if frame.shade:
+									frame.shade=0
+									frame.unshade()
+								break
+							elif event.button==4:
+								if not frame.shade:
+									frame.shade=1
+									frame.reshade()
 								break
 							elif event.button==1:
 								if event.pos[1]>frame.ypos+framepad+hudsize and frame.resizable:
