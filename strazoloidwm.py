@@ -284,44 +284,35 @@ class desktop:
 
 color3d=pygame.Color(70, 70, 70)
 
-def draw3Dbox(surface, rect, color, size=3, invert=0):
-	try:
-		color.r
-	except AttributeError:
-		color=pygame.Color(color[0], color[1], color[2])
-	if invert:
-		
-		subcolor=(color+color3d)
-		supercolor=(color-color3d)
-	else:
-		subcolor=(color-color3d)
-		supercolor=(color+color3d)
-	
-	pygame.draw.line(surface, supercolor, (rect.left, rect.top), (rect.right, rect.top), size)
-	pygame.draw.line(surface, supercolor, (rect.left, rect.top), (rect.left, rect.bottom), size)
-	pygame.draw.line(surface, subcolor, (rect.right, rect.top), (rect.right, rect.bottom), size)
-	pygame.draw.line(surface, subcolor, (rect.left, rect.bottom), (rect.right, rect.bottom), size)
+def draw3Dbox(surface, rect, color1, color2, size=3, invert=0):
+	pygame.draw.line(surface, color1, (rect.left, rect.top), (rect.right, rect.top), size)
+	pygame.draw.line(surface, color1, (rect.left, rect.top), (rect.left, rect.bottom), size)
+	pygame.draw.line(surface, color2, (rect.right, rect.top), (rect.right, rect.bottom), size)
+	pygame.draw.line(surface, color2, (rect.left, rect.bottom), (rect.right, rect.bottom), size)
 
-def drawbevelline(surface, color, point0, point1, size, invert=0):
-	try:
-		color.r
-	except AttributeError:
-		color=pygame.Color(color[0], color[1], color[2])
-	if invert:
-		
-		subcolor=(color+color3d)
-		supercolor=(color-color3d)
-	else:
-		subcolor=(color-color3d)
-		supercolor=(color+color3d)
+def drawbevelline(surface, color1, color2, point0, point1, size, invert=0):
 	point0b=(point0[0], point0[1]-size)
 	point1b=(point1[0], point1[1]-size)
-	pygame.draw.line(surface, supercolor, point0, point1, size)
-	pygame.draw.line(surface, subcolor, point0b, point1b, size)
+	pygame.draw.line(surface, color1, point0, point1, size)
+	pygame.draw.line(surface, color2, point0b, point1b, size)
 
 
+def colorsub(color, mod=color3d):
+	try:
+		color.r
+	except AttributeError:
+		color=pygame.Color(color[0], color[1], color[2])
+	return color-color3d
 
-def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ibev):
+def coloradd(color, mod=color3d):
+	try:
+		color.r
+	except AttributeError:
+		color=pygame.Color(color[0], color[1], color[2])
+	return color+color3d
+
+
+def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ibev, sub_abev, sub_ibev, sub_bg, add_bg, sub_abg, add_abg):
 	framerect=getframe(frame.SurfRect, frame.resizable)
 	if framestyle==2:
 		poprect=framerect.copy()
@@ -337,11 +328,17 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 		qbg=abg
 		qtxt=atxt
 		bev=abev
+		sub_qbg=sub_abg
+		add_qbg=add_abg
+		sub_bev=sub_abev
 	else:
 		qfg=fg
 		qbg=bg
 		qtxt=textcolor
 		bev=ibev
+		sub_qbg=sub_bg
+		add_qbg=add_bg
+		sub_bev=sub_ibev
 	if not framestyle:
 		pygame.draw.rect(dispsurf, qbg, framerect, 0)
 		pygame.draw.rect(dispsurf, qfg, framerect, 1)
@@ -363,16 +360,16 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 			#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
 			pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
 			#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
-		draw3Dbox(dispsurf, poprect, bev, 2, 0)
-		draw3Dbox(dispsurf, framerect, bev, 2, 1)
+		draw3Dbox(dispsurf, poprect, bev, sub_bev, 2)
+		draw3Dbox(dispsurf, framerect, sub_bev, bev, 2)
 		pygame.draw.rect(dispsurf, qbg, closerect, 0)
 		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
 		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
-		draw3Dbox(dispsurf, closerect, qbg, 2)
+		draw3Dbox(dispsurf, closerect, add_qbg, sub_qbg, 2)
 		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
 		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
-		draw3Dbox(dispsurf, shaderect, qbg, 2)
-		drawbevelline(dispsurf, bev, (framerect.x+2, frame.ypos-2), (framerect.x+framerect.w-1, frame.ypos-2), 2, 1)
+		draw3Dbox(dispsurf, shaderect, add_qbg, sub_qbg, 2)
+		drawbevelline(dispsurf, sub_bev, bev, (framerect.x+2, frame.ypos-2), (framerect.x+framerect.w-1, frame.ypos-2), 2, 1)
 		
 	else:
 		#3D frame style
@@ -381,14 +378,14 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 			pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
 			pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
 			pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
-		draw3Dbox(dispsurf, framerect, qbg)
+		draw3Dbox(dispsurf, framerect, add_qbg, sub_qbg)
 		pygame.draw.rect(dispsurf, qbg, closerect, 0)
 		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
 		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
-		draw3Dbox(dispsurf, closerect, qbg, 2)
+		draw3Dbox(dispsurf, closerect, add_qbg, sub_qbg, 2)
 		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
 		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
-		draw3Dbox(dispsurf, shaderect, qbg, 2)
+		draw3Dbox(dispsurf, shaderect, add_qbg, sub_qbg, 2)
 	if frame.wo==0:
 		if frame.name not in titlecacheact:
 			namex=font.render(frame.name, True, atxt, abg).convert()
@@ -413,7 +410,7 @@ def framedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 	dispsurf.blit(frame.surface, frame.SurfRect)
 
 
-def shadedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ibev):
+def shadedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ibev, sub_abev, sub_ibev, sub_bg, add_bg, sub_abg, add_abg):
 	framerect=getframe_shadeaware(frame, frame.SurfRect, frame.resizable)
 	if framestyle==2:
 		poprect=framerect.copy()
@@ -429,11 +426,17 @@ def shadedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 		qbg=abg
 		qtxt=atxt
 		bev=abev
+		sub_qbg=sub_abg
+		add_qbg=add_abg
+		sub_bev=sub_abev
 	else:
 		qfg=fg
 		qbg=bg
 		qtxt=textcolor
 		bev=ibev
+		sub_qbg=sub_bg
+		add_qbg=add_bg
+		sub_bev=sub_ibev
 	if not framestyle:
 		pygame.draw.rect(dispsurf, qbg, framerect, 0)
 		pygame.draw.rect(dispsurf, qfg, framerect, 1)
@@ -455,15 +458,15 @@ def shadedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 		#	#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
 		#	pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
 		#	#pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
-		draw3Dbox(dispsurf, poprect, bev, 2, 0)
-		draw3Dbox(dispsurf, framerect, bev, 2, 1)
+		draw3Dbox(dispsurf, poprect, bev, sub_bev, 2)
+		draw3Dbox(dispsurf, framerect, sub_bev, bev, 2)
 		pygame.draw.rect(dispsurf, qbg, closerect, 0)
 		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
 		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
-		draw3Dbox(dispsurf, closerect, qbg, 2)
+		draw3Dbox(dispsurf, closerect, add_qbg, sub_qbg, 2)
 		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
 		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
-		draw3Dbox(dispsurf, shaderect, qbg, 2)
+		draw3Dbox(dispsurf, shaderect, add_qbg, sub_qbg, 2)
 		#drawbevelline(dispsurf, qfg, (framerect.x+2, frame.ypos-2), (framerect.x+framerect.w-1, frame.ypos-2), 2, 1)
 		
 	else:
@@ -473,14 +476,14 @@ def shadedraw(frame, dispsurf, fg, bg, textcolor, font, abg, atxt, afg, abev, ib
 		#	pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)-(resizebar//3)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)-(resizebar//3)))
 		#	pygame.draw.line(dispsurf, qfg, (framerect.x+(framerect.w//2), framerect.y+framerect.h-(resizebar)-framepad), (framerect.x+(framerect.w//2), framerect.y+framerect.h-1), 2)
 		#	pygame.draw.line(dispsurf, qfg, (framerect.x, framerect.y+framerect.h-(resizebar//2)), (framerect.x+(framerect.w-1), framerect.y+framerect.h-(resizebar//2)), 2)
-		draw3Dbox(dispsurf, framerect, qbg)
+		draw3Dbox(dispsurf, framerect, add_qbg, sub_qbg)
 		pygame.draw.rect(dispsurf, qbg, closerect, 0)
 		pygame.draw.line(dispsurf, qfg, closerect.topleft, closerect.bottomright, 2)
 		pygame.draw.line(dispsurf, qfg, closerect.topright, closerect.bottomleft, 2)
-		draw3Dbox(dispsurf, closerect, qbg, 2)
+		draw3Dbox(dispsurf, closerect, add_qbg, sub_qbg, 2)
 		pygame.draw.rect(dispsurf, qbg, shaderect, 0)
 		pygame.draw.line(dispsurf, qfg, shaderect.midleft, shaderect.midright, 2)
-		draw3Dbox(dispsurf, shaderect, qbg, 2)
+		draw3Dbox(dispsurf, shaderect, add_qbg, sub_qbg, 2)
 	if frame.wo==0:
 		if frame.name not in titlecacheact:
 			namex=font.render(frame.name, True, atxt, abg).convert()
@@ -526,8 +529,14 @@ class framescape:
 		self.ffg=framefg
 		self.afbg=actframebg
 		self.affg=actframefg
+		self.sub_fbg=colorsub(framebg)
+		self.add_fbg=coloradd(framebg)
+		self.sub_afbg=colorsub(actframebg)
+		self.add_afbg=coloradd(actframebg)
 		self.abev=actbevel
 		self.iabev=inactbevel
+		self.sub_abev=colorsub(actbevel)
+		self.sub_iabev=colorsub(inactbevel)
 		self.ftxt=frametext
 		self.aftxt=actframetext
 		self.resizedesk=0
@@ -600,9 +609,10 @@ class framescape:
 			self.surface.blit(self.desktop.surface, (0, 0))
 			for frame in self.proclist:
 				if frame.shade:
-					shadedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg, self.abev, self.iabev)
+					shadedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg, self.abev, self.iabev, self.sub_abev, self.sub_iabev, self.sub_fbg, self.add_fbg, self.sub_afbg, self.add_afbg)
 				else:
-					framedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg, self.abev, self.iabev)
+					framedraw(frame, self.surface, self.ffg, self.fbg, self.ftxt, self.simplefont, self.afbg, self.aftxt, self.affg, self.abev, self.iabev, self.sub_abev, self.sub_iabev, self.sub_fbg, self.add_fbg, self.sub_afbg, self.add_afbg)
+					
 				
 			pygame.display.flip()
 			#event parser
