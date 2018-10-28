@@ -270,6 +270,72 @@ class framex:
 		self.closerect=getclose(self.framerect)
 		self.shadrect=getshade(self.framerect)
 		self.poprect=getpop(self.framerect)
+
+
+
+class ghost:
+	def __init__(self, name, pumpcall=None):
+		self.name=name
+		self.pid=None
+		self.wo=0
+		self.pumpcall=pumpcall
+		self.runflg=1
+		self.statflg=1
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		self.statflg=0
+		self.tr_lock_reset=None
+		#--------------
+	def pump(self):
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		return
+	def click(self, event):
+		self.statflg=4
+		if self.pumpcall!=None:
+			self.pumpcall(self, event)
+		self.statflg=0
+		return
+		
+	def clickup(self, event):
+		self.statflg=5
+		if self.pumpcall!=None:
+			self.pumpcall(self, event)
+		self.statflg=0
+		return
+	def keydown(self, event):
+		self.statflg=6
+		if self.pumpcall!=None:
+			self.pumpcall(self, event)
+		self.statflg=0
+		return
+	def keyup(self, event):
+		self.statflg=7
+		if self.pumpcall!=None:
+			self.pumpcall(self, event)
+		self.statflg=0
+		return
+	def closecall(self):
+		#print("V-PID TERMINATE: " +str(self.pid))
+		self.statflg=3
+		self.runflg=2
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		self.statflg=0
+	def quitcall(self):
+		self.statflg=3
+		self.runflg=0
+		if self.pumpcall!=None:
+			self.pumpcall(self)
+		self.statflg=0
+	#cleanup function for reopening an existing ghost instance.
+	#called by framescape automatically.
+	def start_prep(self):
+		self.statflg=0
+		self.runflg=1
+
+
+
 class desktop:
 	def __init__(self, sizex, sizey, name="desktop", bgcolor=(200, 200, 255), pumpcall=None, resizable=0):
 		#dummy values
@@ -557,7 +623,7 @@ class framescape:
 		self.idlook={}
 		self.idcnt=0
 		self.desktop=desktop
-		
+		self.ghostproc=[]
 		pygame.display.set_caption(desktop.name, desktop.name)
 		self.desktop.surface.convert(self.surface)
 		self.moveframe=None
@@ -580,7 +646,7 @@ class framescape:
 		self.resizedesk=0
 		self.activeframe=None
 		self.simplefont = pygame.font.SysFont(None, fontsize)
-		print("Strazoloid Window Manager v1.1.1")
+		print("Strazoloid Window Manager v1.2.0")
 	def close_pid(self, pid):
 		try:
 			frame=self.idlook[pid]
@@ -589,12 +655,19 @@ class framescape:
 				frame.closecall()
 			if frame==self.activeframe:
 				self.activeframe=None
+			if frame in self.ghostproc:
+				self.ghostproc.remove(frame)
+				frame.closecall()
 		except KeyError:
 			return
 	def close_frame(self, frame):
 		if frame in self.proclist:
 			self.proclist.remove(frame)
 			frame.closecall()
+	def close_ghost(self, ghost):
+		if ghost in self.ghostproc:
+			self.ghostproc.remove(ghost)
+			ghost.closecall()
 	def add_frame(self, frame):
 		frame.surface.convert(self.surface)
 		frame.start_prep()
@@ -606,6 +679,13 @@ class framescape:
 		self.activeframe=frame
 		self.proclist.extend([frame])
 		self.idlook[frame.pid]=frame
+	def add_ghost(self, ghost):
+		ghost.start_prep()
+		ghost.pid=self.idcnt
+		self.idcnt+=1
+		
+		self.ghostproc.extend([ghost])
+		self.idlook[ghost.pid]=ghost
 		
 	def process(self):
 		while self.runflg:
@@ -627,6 +707,8 @@ class framescape:
 			self.desktop.pump()
 			for frame in self.proclist:
 				frame.pump()
+			for ghost in self.ghostproc:
+				ghost.pump()
 			#move & resize
 			if self.moveframe!=None:
 				prevpos=movepos
@@ -666,16 +748,23 @@ class framescape:
 					self.runflg=0
 					for frame in self.proclist:
 						frame.quitcall()
+					for ghost in self.ghostproc:
+						ghost.quitcall()
 					self.desktop.quitcall()
+					
 					break
 				if event.type==pygame.KEYDOWN:
 					if self.activeframe!=None:
 						self.activeframe.keydown(event)
 					self.desktop.keydown(event)
+					for ghost in self.ghostproc:
+						ghost.keydown(event)
 				if event.type==pygame.KEYUP:
 					if self.activeframe!=None:
 						self.activeframe.keyup(event)
 					self.desktop.keyup(event)
+					for ghost in self.ghostproc:
+						ghost.keyup(event)
 				if event.type==pygame.MOUSEBUTTONUP:
 					if event.button==1:
 						if self.moveframe!=None and resizeframe!=0:
@@ -684,9 +773,12 @@ class framescape:
 					if self.activeframe!=None:
 						self.activeframe.clickup(event)
 					self.desktop.clickup(event)
+					for ghost in self.ghostproc:
+						ghost.clickup(event)
 				if event.type==pygame.MOUSEBUTTONDOWN:
 					self.proclist.sort(key=lambda x: x.wo, reverse=False)
-					
+					for ghost in self.ghostproc:
+						ghost.click(event)
 					click=0
 					for frame in self.proclist:
 						framerectx=getframe_shadeaware(frame, frame.SurfRect, frame.resizable)

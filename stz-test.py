@@ -77,6 +77,19 @@ def proccount(frameobj, data=None):
 
 	
 
+#ghost tasks can't display anything, hence the name 'ghost'.
+#they are useful for things like getting all keyboard events,
+#getting all mouse events, etc.
+#Also, they are 'pumped' every frame as well, and can be closed 
+#via their PID, or via passing the ghost instance to framescape.close_ghost(ghost)
+
+#both frame and ghost tasks can be terminated via their unique PID:
+#framescape.close_pid(pid)
+#in addition frames can be closed via passing the framex instance to:
+#ramescape.close_frame(framex)
+
+testghost=stz.ghost("GHOST TASK 1", pumpcall=event_test)
+
 testframe=stz.framex(200, 200, "test --REALLYLONGNAME--  -- -----------", resizable=1, pumpcall=event_test)
 testframe2=stz.framex(200, 100, "test2", pumpcall=event_test)
 testframe3=stz.framex(200, 60, "test3", pumpcall=proccount)
@@ -103,10 +116,12 @@ class doodlexq:
 doodleinst=doodlexq()
 doodleframe=stz.framex(300, 300, "doodle (left=draw, right=reset)", pumpcall=doodleinst.framecall)
 
-
+#once we create our framex task objects, we can start them like so:
 framesc.add_frame(testframe)
 framesc.add_frame(testframe2)
 framesc.add_frame(testframe3)
 framesc.add_frame(doodleframe)
+#and for ghost task objects, we do:
+framesc.add_ghost(testghost)
 #begin wm mainloop.
 framesc.process()
