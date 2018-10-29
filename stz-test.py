@@ -46,25 +46,25 @@ framesc=stz.framescape(desk)
 
 def proccount(frameobj, data=None):
 	if frameobj.statflg==0:
-		frameobj.name="test3. proc count: "+ str(len(framesc.proclist))
+		frameobj.name="frames: " + str(len(framesc.proclist)) + " | ghosts: " +  str(len(framesc.ghostproc))
 	if frameobj.statflg==3:
 		if frameobj.runflg==2:
-			#persistance
-			print("test3: frame has closed, restoring frame")
+			#persistence
+			print("frames/ghosts counter: frame has closed, restoring frame")
 			framesc.add_frame(frameobj)
 
 #the following flag values also apply to desktop class except where noted.
 
 #statflg values:
 #0=wm system pump call. (called every mainloop of framescape)
-#1=startup. system should initalize
+#1=startup. system should initialize
 #2=frame resize. surface should be redrawn and positions recalibrated. (frames only)
 #3=frame close/quit/halt check runflg value for condition.
 #4=clickdown
 #5=clickup
 #6=keydown
 #7=keyup
-#8=desktop window resize (desktop only) (desktop must have resizability enabled)
+#8=desktop window resize (desktop only) (desktop must have realizability enabled)
 #9=window has been shaded. (aka, shrunk to just a title bar. surface is HIDDEN.) (frames only)
 #10=window has been unshaded. (aka returned to normal) (frames only)
 
@@ -73,9 +73,6 @@ def proccount(frameobj, data=None):
 #0=frame has quit due to window manager shutting down.
 #2=frame has been closed by user. (frames only)
 
-		
-
-	
 
 #ghost tasks can't display anything, hence the name 'ghost'.
 #they are useful for things like getting all keyboard events,
@@ -90,9 +87,12 @@ def proccount(frameobj, data=None):
 
 testghost=stz.ghost("GHOST TASK 1", pumpcall=event_test)
 
-testframe=stz.framex(200, 200, "test --REALLYLONGNAME--  -- -----------", resizable=1, pumpcall=event_test)
-testframe2=stz.framex(200, 100, "test2", pumpcall=event_test)
-testframe3=stz.framex(200, 60, "test3", pumpcall=proccount)
+testframe=stz.framex(200, 200, "test --REALLYLONGNAME--  -- -----------", resizable=1, pumpcall=event_test, xpos=10, ypos=0)
+testframe2=stz.framex(200, 100, "test2", pumpcall=event_test, xpos=560, ypos=200)
+testframe3=stz.framex(235, 60, "frames: 0 | ghosts: 0", pumpcall=proccount, xpos=550, ypos=100)
+
+#### SIMPLE DOODLE APP EXAMPLE ####
+
 class doodlexq:
 	def __init__(self):
 		self.lineflg=0
@@ -100,7 +100,7 @@ class doodlexq:
 	def framecall(self, frameobj, data=None):
 		if frameobj.statflg==0:
 			if self.lineflg:
-				#remove xy postition bias using mousehelper.
+				#remove xy position bias using mousehelper.
 				self.curpos=stz.mousehelper(pygame.mouse.get_pos(), frameobj)
 				pygame.draw.line(frameobj.surface, (255, 255, 255), self.prevpos, self.curpos, 1)
 				self.prevpos=self.curpos
@@ -114,7 +114,35 @@ class doodlexq:
 			self.lineflg=0
 	
 doodleinst=doodlexq()
-doodleframe=stz.framex(300, 300, "doodle (left=draw, right=reset)", pumpcall=doodleinst.framecall)
+doodleframe=stz.framex(300, 300, "doodle (left=draw, right=reset)", pumpcall=doodleinst.framecall, xpos=235, ypos=0)
+
+########
+
+
+#### 'colored' example from docs/events.md  (EXAMPLE 2) ####
+
+class colored:
+	def __init__(self, color=(255, 0, 255)):
+		self.color=color
+	def drawdisp(self, frameobj):
+		frameobj.surface.fill(self.color)
+	def pumpcall1(self, frameobj, data=None):
+		if frameobj.statflg==1:
+			self.drawdisp(frameobj)
+		if frameobj.statflg==2:
+			self.drawdisp(frameobj)
+
+#purple
+colorpurple=colored()
+purpleframe=stz.framex(400, 50, "colored (purple) (from docs/events.md)", pumpcall=colorpurple.pumpcall1, xpos=150, ypos=400, resizable=1, sizeminx=250, sizeminy=50)
+framesc.add_frame(purpleframe)
+
+#orange
+colororange=colored(color=(255, 127, 0))
+orangeframe=stz.framex(400, 50, "colored (orange) (from docs/events.md)", pumpcall=colororange.pumpcall1, xpos=150, ypos=500, resizable=1, sizeminx=250, sizeminy=50)
+framesc.add_frame(orangeframe)
+
+########
 
 #once we create our framex task objects, we can start them like so:
 framesc.add_frame(testframe)

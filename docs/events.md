@@ -2,6 +2,8 @@
 
 [Index](index.md)
 
+### Overview
+
 All task types require a pumpcall function with 2 arguments. the first
 contains a reference to the task object instance, the other any data
 relevant to the current status code.
@@ -11,35 +13,47 @@ For example, a help viewer.
 
 EVERY STATUS CODE GETS RUN THROUGH THESE PUMPCALL FUNCTIONS. YOU MUST ALWAYS CHECK STATFLG!
 
-```
-def some_class_method(frameobj, data):
-	if frameobj.statflg==0:
-		print(
-	if frameobj.statflg==1:
-		print("Init")
-	if frameobj.statflg==2:
-		print("resize")
-	#note the extra flag checked.
-	if frameobj.statflg==3:
-		if frameobj.runflg==0:
-			print("Strazoloid is shutting down! goodbye!")
-		if frameobj.runflg==2:
-			print("If im a framex instance, this means i was closed!")
-```
-
 **framex** and **desktop** task objects also contain sizes and drawing surfaces.
-Say we want a window thats filled with purple:
+
+### Example 1
+_Say we want a window thats filled with purple:_
 
 ```
-def some_class_method(frameobj, data):
-	if frameobj.statflg==1:
+class purple:
+	def __init__(self):
+		return
+	def drawdisp(self, frameobj):
 		frameobj.surface.fill((255, 0, 255))
-	if frameobj.statflg==2:
-		frameobj.surface.fill((255, 0, 255))
+	def pumpcall1(self, frameobj, data=None):
+		if frameobj.statflg==1:
+			self.drawdisp(frameobj)
+		if frameobj.statflg==2:
+			#need to redraw after resize events.
+			self.drawdisp(frameobj)
 ```
 
-We need to redraw after resize events, as we now have a new surface.
+### Example 2
+_But what if we want an orange one too?_
 
+
+```
+class colored:
+	def __init__(self, color=(255, 0, 255)):
+		self.color=color
+	def drawdisp(self, frameobj):
+		frameobj.surface.fill(self.color)
+	def pumpcall1(self, frameobj, data=None):
+		if frameobj.statflg==1:
+			self.drawdisp(frameobj)
+		if frameobj.statflg==2:
+			self.drawdisp(frameobj)
+```
+
+With **colored** we can create both purple and orange colored windows.
+This is why classes are reccomended, as you can have the same code
+in multiple instances, with different parameters.
+
+_stz-test.py shows off **colored** in use._
 
 ### Chart of what codes are sent where:
 

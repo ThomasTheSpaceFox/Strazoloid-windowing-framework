@@ -646,15 +646,20 @@ class framescape:
 		self.resizedesk=0
 		self.activeframe=None
 		self.simplefont = pygame.font.SysFont(None, fontsize)
-		print("Strazoloid Window Manager v1.2.0")
+		print("Strazoloid Window Manager v1.2.1")
 	def close_pid(self, pid):
 		try:
 			frame=self.idlook[pid]
 			if frame in self.proclist:
 				self.proclist.remove(frame)
+				if frame==self.activeframe:
+					self.activeframe=None
+					for framew in self.proclist:
+						framew.wo-=1
+						if framew.wo==0:
+							self.activeframe=framew
 				frame.closecall()
-			if frame==self.activeframe:
-				self.activeframe=None
+			
 			if frame in self.ghostproc:
 				self.ghostproc.remove(frame)
 				frame.closecall()
@@ -663,6 +668,12 @@ class framescape:
 	def close_frame(self, frame):
 		if frame in self.proclist:
 			self.proclist.remove(frame)
+			if frame==self.activeframe:
+					self.activeframe=None
+					for framew in self.proclist:
+						framew.wo-=1
+						if framew.wo==0:
+							self.activeframe=framew
 			frame.closecall()
 	def close_ghost(self, ghost):
 		if ghost in self.ghostproc:
@@ -794,12 +805,17 @@ class framescape:
 										framew.wo+=1
 									frame.wo=0
 									self.activeframe=frame
+									frame.click(event)
 									break
 							elif getclose(framerectx).collidepoint(event.pos) and event.button==1:
 								self.proclist.remove(frame)
 								frame.closecall()
 								if frame==self.activeframe:
 									self.activeframe=None
+									for framew in self.proclist:
+										framew.wo-=1
+										if framew.wo==0:
+											self.activeframe=framew
 								break
 							elif getshade(framerectx).collidepoint(event.pos) and event.button==1:
 								if frame.shade:
