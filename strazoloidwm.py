@@ -669,11 +669,11 @@ class framescape:
 		if frame in self.proclist:
 			self.proclist.remove(frame)
 			if frame==self.activeframe:
-					self.activeframe=None
-					for framew in self.proclist:
-						framew.wo-=1
-						if framew.wo==0:
-							self.activeframe=framew
+				self.activeframe=None
+				for framew in self.proclist:
+					framew.wo-=1
+					if framew.wo==0:
+						self.activeframe=framew
 			frame.closecall()
 	def close_ghost(self, ghost):
 		if ghost in self.ghostproc:
