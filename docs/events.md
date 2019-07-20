@@ -18,36 +18,35 @@ EVERY STATUS CODE GETS RUN THROUGH THESE PUMPCALL FUNCTIONS. YOU MUST ALWAYS CHE
 ### Example 1
 _Say we want a window thats filled with purple:_
 
-```
-class purple:
-	def __init__(self):
-		return
-	def drawdisp(self, frameobj):
-		frameobj.surface.fill((255, 0, 255))
-	def pumpcall1(self, frameobj, data=None):
-		if frameobj.statflg==1:
-			self.drawdisp(frameobj)
-		if frameobj.statflg==2:
-			#need to redraw after resize events.
-			self.drawdisp(frameobj)
-```
+
+	class purple:
+		def __init__(self):
+			return
+		def drawdisp(self, frameobj):
+			frameobj.surface.fill((255, 0, 255))
+		def pumpcall1(self, frameobj, data=None):
+			if frameobj.statflg==1:
+				self.drawdisp(frameobj)
+			if frameobj.statflg==2:
+				#need to redraw after resize events.
+				self.drawdisp(frameobj)
+
 
 ### Example 2
 _But what if we want an orange one too?_
 
 
-```
-class colored:
-	def __init__(self, color=(255, 0, 255)):
-		self.color=color
-	def drawdisp(self, frameobj):
-		frameobj.surface.fill(self.color)
-	def pumpcall1(self, frameobj, data=None):
-		if frameobj.statflg==1:
-			self.drawdisp(frameobj)
-		if frameobj.statflg==2:
-			self.drawdisp(frameobj)
-```
+	class colored:
+		def __init__(self, color=(255, 0, 255)):
+			self.color=color
+		def drawdisp(self, frameobj):
+			frameobj.surface.fill(self.color)
+		def pumpcall1(self, frameobj, data=None):
+			if frameobj.statflg==1:
+				self.drawdisp(frameobj)
+			if frameobj.statflg==2:
+				self.drawdisp(frameobj)
+
 
 With **colored** we can create both purple and orange colored windows.
 This is why classes are reccomended, as you can have the same code
@@ -93,9 +92,9 @@ pygame event object on _clickup_, _clickdown_, _keyup_, and _keydown_ events.
 Also note: framex mouse events are NOT ALIGNED WITH FRAMEX SURFACE!
 However the mousehelper function can help:
 
-```
-strazoloidwm.mousehelper(pos, frameobj)
-```
+
+	strazoloidwm.mousehelper(pos, frameobj)
+
 
 `pos` should be a _tuple_ containing the x and y position (as returned by pygame)
 `frameobj` should be a reference to the _frame object_ instance.

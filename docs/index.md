@@ -17,7 +17,8 @@ test code provided, should provide you with more than enough information to get 
 ## Index
 
 - [pumpcall functions and responding to events.](events.md)
-
+- [framex virtual windows (some parts covered in other sections.)](framex.md)
 ## FAQs:
 - [General FAQ](gen_faq.md)
+
 

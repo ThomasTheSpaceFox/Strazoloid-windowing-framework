@@ -38,7 +38,7 @@ def event_test(frameobj, data=None):
 		print(frameobj.name + " stat 10: frame unshade")
 
 
-
+stz.framestyle=2
 
 #if you want the multi-window enviornment to be resizable, set the resizable flag to 1 in the desktop instance.
 desk=stz.desktop(800, 600, "Test desktop 1", pumpcall=event_test, resizable=1)
@@ -51,7 +51,10 @@ def proccount(frameobj, data=None):
 		if frameobj.runflg==2:
 			#persistence
 			print("frames/ghosts counter: frame has closed, restoring frame")
+			#restore frame
 			framesc.add_frame(frameobj)
+			#make active frame.
+			#framesc.raise_frame(frameobj)
 
 #the following flag values also apply to desktop class except where noted.
 
@@ -89,11 +92,13 @@ testghost=stz.ghost("GHOST TASK 1", pumpcall=event_test)
 
 testframe=stz.framex(200, 200, "test --REALLYLONGNAME--  -- -----------", resizable=1, pumpcall=event_test, xpos=10, ypos=0)
 testframe2=stz.framex(200, 100, "test2", pumpcall=event_test, xpos=560, ypos=200)
-testframe3=stz.framex(235, 60, "frames: 0 | ghosts: 0", pumpcall=proccount, xpos=550, ypos=100)
+
+tstfrm3_icon=pygame.image.load("testicon1_20px.png")
+testframe3=stz.framex(235, 60, "frames: 0 | ghosts: 0", pumpcall=proccount, xpos=550, ypos=100, icon=tstfrm3_icon)
 
 #### SIMPLE DOODLE APP EXAMPLE ####
 
-class doodlexq:
+class drawxq:
 	def __init__(self):
 		self.lineflg=0
 		return
@@ -112,14 +117,16 @@ class doodlexq:
 				frameobj.surface.fill((0, 0, 0))
 		elif frameobj.statflg==5:
 			self.lineflg=0
-	
-doodleinst=doodlexq()
-doodleframe=stz.framex(300, 300, "doodle (left=draw, right=reset)", pumpcall=doodleinst.framecall, xpos=235, ypos=0)
+drawicon=pygame.image.load("doodle.png")	
+drawinst=drawxq()
+drawframe=stz.framex(300, 300, "draw (left=draw, right=reset)", pumpcall=drawinst.framecall, xpos=235, ypos=0, icon=drawicon)
 
 ########
 
 
 #### 'colored' example from docs/events.md  (EXAMPLE 2) ####
+
+colorsicon=pygame.image.load("colors1.png")
 
 class colored:
 	def __init__(self, color=(255, 0, 255)):
@@ -129,17 +136,18 @@ class colored:
 	def pumpcall1(self, frameobj, data=None):
 		if frameobj.statflg==1:
 			self.drawdisp(frameobj)
+			
 		if frameobj.statflg==2:
 			self.drawdisp(frameobj)
 
 #purple
 colorpurple=colored()
-purpleframe=stz.framex(400, 50, "colored (purple) (from docs/events.md)", pumpcall=colorpurple.pumpcall1, xpos=150, ypos=400, resizable=1, sizeminx=250, sizeminy=50)
+purpleframe=stz.framex(400, 50, "colored (purple) (from docs/events.md)", pumpcall=colorpurple.pumpcall1, xpos=150, ypos=400, resizable=1, sizeminx=250, sizeminy=50, icon=colorsicon)
 framesc.add_frame(purpleframe)
 
 #orange
 colororange=colored(color=(255, 127, 0))
-orangeframe=stz.framex(400, 50, "colored (orange) (from docs/events.md)", pumpcall=colororange.pumpcall1, xpos=150, ypos=500, resizable=1, sizeminx=250, sizeminy=50)
+orangeframe=stz.framex(400, 50, "colored (orange) (from docs/events.md)", pumpcall=colororange.pumpcall1, xpos=150, ypos=500, resizable=1, sizeminx=250, sizeminy=50, icon=colorsicon)
 framesc.add_frame(orangeframe)
 
 ########
@@ -148,7 +156,7 @@ framesc.add_frame(orangeframe)
 framesc.add_frame(testframe)
 framesc.add_frame(testframe2)
 framesc.add_frame(testframe3)
-framesc.add_frame(doodleframe)
+framesc.add_frame(drawframe)
 #and for ghost task objects, we do:
 framesc.add_ghost(testghost)
 #begin wm mainloop.
