@@ -36,9 +36,20 @@ def event_test(frameobj, data=None):
 		print(frameobj.name + " stat 9: frame shade")
 	elif frameobj.statflg==10:
 		print(frameobj.name + " stat 10: frame unshade")
-
+	elif frameobj.statflg==11:
+		print(frameobj.name + " stat 11: frame Resizing")
+	elif frameobj.statflg==12:
+		print(frameobj.name + " stat 12: desktop quit check \n\t (called upon pygame.QUIT *IF* code12_askbeforequit=True")
+		return True
+		#SPECIAL NOTE: Return False here, if you want to, say, show a 'are you sure you want to quit' dialog. use framescape.shutdown() to close in that case.
 
 stz.framestyle=2
+#whether to run desktop callback code 12, asking wether to obey pygame.QUIT event and shutdown program.
+#return True on code 12 to obey quit event, or False to Ignore quit event.
+stz.code12_askbeforequit=True
+
+#NOTE: use framescape.shutdown() method to manually shutdown program.
+
 
 #if you want the multi-window enviornment to be resizable, set the resizable flag to 1 in the desktop instance.
 desk=stz.desktop(800, 600, "Test desktop 1", pumpcall=event_test, resizable=1)
@@ -56,6 +67,14 @@ def proccount(frameobj, data=None):
 			#make active frame.
 			#framesc.raise_frame(frameobj)
 
+
+def shutdown_test(frameobj, data=None):
+	if frameobj.statflg==1:
+		frameobj.name="QUIT TEST: Close this frame to call framescape.shutdown()"
+	if frameobj.statflg==3:
+		if frameobj.runflg==2:
+			framesc.shutdown()
+
 #the following flag values also apply to desktop class except where noted.
 
 #statflg values:
@@ -70,6 +89,10 @@ def proccount(frameobj, data=None):
 #8=desktop window resize (desktop only) (desktop must have realizability enabled)
 #9=window has been shaded. (aka, shrunk to just a title bar. surface is HIDDEN.) (frames only)
 #10=window has been unshaded. (aka returned to normal) (frames only)
+#11=frame is resizing. render on this instead of code 2, to render while resizing. 
+#    You might also render a simplified screen on code 11, and render the full display on code 2, if needed.
+#12=desktop shutdown check, return True: shutdown instantly, return False, don't shutdown. (Must set code12_askbeforequit=True)
+
 
 #runflg values:
 #1=frame is running.
@@ -91,8 +114,9 @@ def proccount(frameobj, data=None):
 testghost=stz.ghost("GHOST TASK 1", pumpcall=event_test)
 
 testframe=stz.framex(200, 200, "test --REALLYLONGNAME--  -- -----------", resizable=1, pumpcall=event_test, xpos=10, ypos=0)
-testframe2=stz.framex(200, 100, "test2", pumpcall=event_test, xpos=560, ypos=200)
-
+#setting xpos/ypos to none or not specifying them will cause strazoloid to try and randomly place the frame within the main window boundry.
+testframe2=stz.framex(200, 100, "test2", pumpcall=event_test, xpos=None, ypos=None)
+testframe4=stz.framex(400, 100, "quit test", pumpcall=shutdown_test, xpos=None, ypos=None)
 tstfrm3_icon=pygame.image.load("testicon1_20px.png")
 testframe3=stz.framex(235, 60, "frames: 0 | ghosts: 0", pumpcall=proccount, xpos=550, ypos=100, icon=tstfrm3_icon)
 
@@ -136,8 +160,11 @@ class colored:
 	def pumpcall1(self, frameobj, data=None):
 		if frameobj.statflg==1:
 			self.drawdisp(frameobj)
-			
-		if frameobj.statflg==2:
+		#PLEASE NOTE: make your code redraw on statflg 2 if you want to use less CPU when resizing!
+		
+		#if frameobj.statflg==2:
+		#	self.drawdisp(frameobj)
+		if frameobj.statflg==11:
 			self.drawdisp(frameobj)
 
 #purple
@@ -154,9 +181,11 @@ framesc.add_frame(orangeframe)
 
 #once we create our framex task objects, we can start them like so:
 framesc.add_frame(testframe)
-framesc.add_frame(testframe2)
+
 framesc.add_frame(testframe3)
+framesc.add_frame(testframe4)
 framesc.add_frame(drawframe)
+framesc.add_frame(testframe2)
 #and for ghost task objects, we do:
 framesc.add_ghost(testghost)
 #begin wm mainloop.
